@@ -13,8 +13,8 @@ It must be started with a helper script that specifies:
 
 That means, e.g.
 ```shell
-```
 cat helper_script.sh
+```
 ```shell
 #!/bin/bash
 cat primary_chr.bed | \
