@@ -26,7 +26,6 @@ TUMOR=$1
 NORMAL=$2
 BASENAME=$3
 REGION=$4
-PWD="/scratch/tmp/a_toen03/WGS/Variants"
 ####
 VARSCAN="java -jar $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
@@ -63,8 +62,8 @@ if [[ ! -e ${NORMAL}.bai ]]; then
 ## Raw variants:
 echo '[MAIN]: VarScan mpileup/somatic:'
 samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
-  <(samtools view -bu -@ 2 $NORMAL $REGION) | \
-  <(samtools view -bu -@ 2 $TUMOR $REGION) \
+  <(samtools view -bu -@ 2 $NORMAL $REGION) \
+  <(samtools view -bu -@ 2 $TUMOR $REGION) | \
     $VARSCAN somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
 
 cd ./VCF
