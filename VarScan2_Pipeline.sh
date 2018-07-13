@@ -33,8 +33,8 @@ HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 
 ## Check if programs are in path:
 command -v samtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
-command -v sambamba >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
-command -v bam-readcount >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
+command -v sambamba >/dev/null 2>&1 || { echo >&2 "[ERROR]: sambamba is not in PATH"; exit 1; }
+command -v bam-readcount >/dev/null 2>&1 || { echo >&2 "[ERROR]: bam-readcount is not in PATH"; exit 1; }
 command -v bedtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: bedtools is not in PATH"; exit 1; }
 command -v mawk >/dev/null 2>&1 || { echo >&2 "[ERROR]: mawk is not in PATH"; exit 1; }
 command -v bgzip >/dev/null 2>&1 || { echo >&2 "[ERROR]: bgzip is not in PATH"; exit 1; }
@@ -165,6 +165,15 @@ if [[ ! -d fpfilter_passed ]]
   fi
 
 mv ${BASENAME}*_passed.vcf ./fpfilter_passed
+
+echo ''
+echo '[INFO]: Merging variants to one file
+## Merge all variants to one file per input sample:
+cd ./fpfilter_passed
+ls RG*.vcf | head -n 1 | xargs grep '#' > ${BASENAME}_header.txt
+cat RG*.vcf | mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n --parallel=8"}' | \
+  cat ${BASENAME}_header.txt /dev/stdin | bgzip -@ 8 > ${BASENAME}_Somatic.vcf.gz &&
+  rm ${BASENAME}*.vcf
 
 #####################################################################################################
 
