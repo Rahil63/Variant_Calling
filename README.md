@@ -12,7 +12,8 @@ It must be started with a helper script that specifies:
 3) indicate the chromosomes for the parallelization.
 
 That means, e.g.
-
+```shell
+```
 cat helper_script.sh
 ```shell
 #!/bin/bash
