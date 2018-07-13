@@ -27,10 +27,20 @@ NORMAL=$2
 BASENAME=$3
 REGION=$4
 ####
-VARSCAN="java -jar $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
+
+## Check if programs are in path:
+command -v samtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
+command -v sambamba >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
+command -v bam-readcount >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
+command -v bedtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: bedtools is not in PATH"; exit 1; }
+command -v mawk >/dev/null 2>&1 || { echo >&2 "[ERROR]: mawk is not in PATH"; exit 1; }
+command -v bgzip >/dev/null 2>&1 || { echo >&2 "[ERROR]: bgzip is not in PATH"; exit 1; }
+
+EXIT=$(echo '[ERROR]: varscan2 must be set as an alias -- alias varscan2="java jar /path/to/varscan2.2jar' && exit 1)
+alias varscan2 2>/dev/null >/dev/null || $EXIT
 
 echo ''
 echo '[INFO]: Pipeline for' $BASENAME 'started' && date && echo ''
@@ -64,7 +74,7 @@ echo '[MAIN]: VarScan mpileup/somatic:'
 samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
   <(samtools view -bu -@ 2 $NORMAL $REGION) \
   <(samtools view -bu -@ 2 $TUMOR $REGION) | \
-    $VARSCAN somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
+    varscan2 somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
 
 cd ./VCF
 
@@ -79,8 +89,8 @@ if [[ ! -d processSomatic ]]
 
 echo ''
 echo '[MAIN]: VarScan processSomatic'
-cat ${BASENAME}.snp.vcf | $VARSCAN processSomatic ./processSomatic/${BASENAME}.snp.vcf --max-normal-freq 0.01 
-cat ${BASENAME}.indel.vcf | $VARSCAN processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
+cat ${BASENAME}.snp.vcf | varscan2 processSomatic ./processSomatic/${BASENAME}.snp.vcf --max-normal-freq 0.01 
+cat ${BASENAME}.indel.vcf | varscan2 processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
 
 ## Sort high-confidence variants into separate folder:
 cd ./processSomatic
@@ -133,19 +143,19 @@ if [[ $(bgzip -c -d ${BASENAME}-n.bamRC.gz | head -n 20 | grep -c 'chr' README.t
 
 ## Apply fpfilter:
 echo '[MAIN]: Applying false-positive filter:' && echo ''
-$VARSCAN fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+varscan2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
   --output-file ${BASENAME}.snp.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.snp.Somatic.hc_failed.vcf
   echo ''
 
-$VARSCAN fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+varscan2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
   --output-file ${BASENAME}.indel.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.indel.Somatic.hc_failed.vcf
 echo ''
 
-$VARSCAN fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
   --output-file ${BASENAME}.snp.LOH.hc_passed.vcf --filtered-file ${BASENAME}.snp.LOH.hc_failed.vcf
 echo ''
 
-$VARSCAN fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
   --output-file ${BASENAME}.indel.LOH.hc_passed.vcf --filtered-file ${BASENAME}.indel.LOH.hc_failed.vcf
 echo ''
 
