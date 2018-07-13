@@ -4,7 +4,7 @@ Scripts related to variant calling, filtering and annotation of VCF files.
 #####################################################################################################################
 #####################################################################################################################
 
-# Using VarScan2_Pipeline.sh
+## Using VarScan2_Pipeline.sh
 This script calls variants from a tumor-normal pair, requiring only the two BAM files as input.
 It must be started with a helper script that specifies:
 1) the full path to the bam files
@@ -33,3 +33,5 @@ samtools idxstats RG024-n_SortedRmdup.bam | \
 ```  
 The varscan pipeline will then create a folder ./VCF and several subfolders, where the final variants that passed the fpfilter will be present in ./VCF/processSomatic/VCF_High_Confidence/fpfilter_passed, split by chromosome.
 
+## Filter_VCF_Common.sh
+This is a script that reads a VCF file and then uses the Ensemble Variant Effect Predictor together with dbSNP151 to remove variants that have either a MAF in the 1KG greater 1 or an AF for ALT in TOPMED greater 1%.
