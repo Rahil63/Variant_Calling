@@ -165,13 +165,14 @@ if [[ ! -d fpfilter_passed ]]
 
 mv ${BASENAME}*_passed.vcf ./fpfilter_passed
 
-echo ''
-echo '[INFO]: Merging variants to one file
 ## Merge all variants to one file per input sample:
+echo ''
+echo '[INFO]: Merging variants to one file'
 cd ./fpfilter_passed
 ls RG*.vcf | head -n 1 | xargs grep '#' > ${BASENAME}_header.txt
 cat RG*.vcf | mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n --parallel=8"}' | \
   cat ${BASENAME}_header.txt /dev/stdin | bgzip -@ 8 > ${BASENAME}_Somatic.vcf.gz &&
+  tabix -p vcf ${BASENAME}_Somatic.vcf.gz &&
   rm ${BASENAME}*.vcf
 
 #####################################################################################################
