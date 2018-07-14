@@ -111,7 +111,8 @@ if [[ ! -d Germline ]];
   
 mv ${BASENAME}*Germline* ./Germline
 
-##############################
+#####################################################################################################
+
 #### BAM-READCOUNT & FPFILTER:
 
 ## Now concatenate all hc-VCF of one sample, sort and make a bed file of it for bam-readcount:
@@ -122,6 +123,13 @@ egrep -hv "^#" ${BASENAME}*.hc.vcf | \
   sort -k1,1 -k2,2n --parallel=8 | \
   bedtools merge -i - > ${BASENAME}_bamRC_template.bed
 
+## Abort if template file is empty:
+mapfile -n 1 < ${BASENAME}_bamRC_template.bed
+if ((${#MAPFILE[@]}==0)); then
+  echo '[WARNING]: Aborting script because no variants made it to this point (template for bamRC)'
+  exit 0
+  fi
+
 ## Now get data from bam-readcount for both the tumor and normal file:
 echo '[MAIN]: Getting data from bam-readcount:' && echo ''
 bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 $TUMOR | \
@@ -130,40 +138,46 @@ bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 
   bgzip -@ 6 > ${BASENAME}-n.bamRC.gz
 echo ''
 
-## Check if files are not empty:
-if [[ $(bgzip -c -d ${BASENAME}-t.bamRC.gz | head -n 20 | grep -c 'chr' README.txt) == 0 ]]
-  then
-  echo '[ERROR]:' ${BASENAME}-t.bamRC.gz 'seems to be empty - exiting' && exit 1
-  fi
-if [[ $(bgzip -c -d ${BASENAME}-n.bamRC.gz | head -n 20 | grep -c 'chr' README.txt) == 0 ]]
-  then
-  echo '[ERROR]:' ${BASENAME}-n.bamRC.gz 'seems to be empty - exiting' && exit 1
-  fi  
+#####################################################################################################
 
-## Apply fpfilter:
-echo '[MAIN]: Applying false-positive filter:' && echo ''
-varscan2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
-  --output-file ${BASENAME}.snp.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.snp.Somatic.hc_failed.vcf
+## Apply fpfilter in case the bamRC files are not empty due to whatever reason:
+mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
+
+if ((${#MAPFILE[@]} > 0)); then
+  
+  echo '[MAIN]: Applying false-positive filter:' && echo ''
+  varscan2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+    --output-file ${BASENAME}.snp.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.snp.Somatic.hc_failed.vcf
   echo ''
 
-varscan2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
-  --output-file ${BASENAME}.indel.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.indel.Somatic.hc_failed.vcf
-echo ''
+  varscan2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+    --output-file ${BASENAME}.indel.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.indel.Somatic.hc_failed.vcf
+  echo ''
 
-varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
-  --output-file ${BASENAME}.snp.LOH.hc_passed.vcf --filtered-file ${BASENAME}.snp.LOH.hc_failed.vcf
-echo ''
+  fi
 
-varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
-  --output-file ${BASENAME}.indel.LOH.hc_passed.vcf --filtered-file ${BASENAME}.indel.LOH.hc_failed.vcf
-echo ''
+mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
+  
+if ((${#MAPFILE[@]} > 0)); then  
 
+  varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+    --output-file ${BASENAME}.snp.LOH.hc_passed.vcf --filtered-file ${BASENAME}.snp.LOH.hc_failed.vcf
+  echo ''
+
+  varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+    --output-file ${BASENAME}.indel.LOH.hc_passed.vcf --filtered-file ${BASENAME}.indel.LOH.hc_failed.vcf
+  echo ''
+
+  fi
+  
 if [[ ! -d fpfilter_passed ]]
   then
   mkdir fpfilter_passed
   fi
 
 mv ${BASENAME}*_passed.vcf ./fpfilter_passed
+
+#####################################################################################################
 
 ## Merge all variants to one file per input sample:
 echo ''
