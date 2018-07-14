@@ -34,7 +34,7 @@ samtools idxstats RG024-n_SortedRmdup.bam | \
 The varscan pipeline will then create a folder ./VCF and several subfolders, where the final variants that passed the fpfilter will be present in ./VCF/processSomatic/VCF_High_Confidence/fpfilter_passed, split by chromosome.
 
 ## Filter_VCF_Common.sh
-This is a script that reads a VCF file and then uses the Ensemble Variant Effect Predictor together with dbSNP151 to remove variants that have either a MAF in the 1KG greater 1 or an AF for ALT in TOPMED greater 1%.
+This is a script that reads a VCF file and then uses the Ensemble Variant Effect Predictor together with dbSNP151 to remove variants that are flagged as common variant in the 1KG (means MAF of at least 1% in any of the ethnicity groups, indicated by COMMON=1) or an AF for ALT in TOPMED greater 1%.
 
 ## Split_VCF_By_Chr.sh
 This script uses Tabix and parallel to split a VCF file into one VCF per chromosome.
