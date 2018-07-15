@@ -39,9 +39,10 @@ command -v mawk >/dev/null 2>&1 || { echo >&2 "[ERROR]: mawk is not in PATH"; ex
 command -v bgzip >/dev/null 2>&1 || { echo >&2 "[ERROR]: bgzip is not in PATH"; exit 1; }
 
 ## Check if varscan2.jar is set as alias "varscan2"
-alias varscan2 2>/dev/null >/dev/null || \
-  { echo '[ERROR]: varscan2 executable must be set as an alias -- alias varscan2=java jar /path/to/varscan2.jar';
-    exit 1; }
+function error_alias {
+  echo '[ERROR]: varscan2 executable must be set as an alias -- alias varscan2=java jar /path/to/varscan2.jar'
+  exit 1
+}; alias varscan2 2>/dev/null >/dev/null || ${error_alias}
 
 #####################################################################################################
 
@@ -180,18 +181,6 @@ if [[ ! -d fpfilter_passed ]]
   fi
 
 mv ${BASENAME}*_passed.vcf ./fpfilter_passed
-
-#####################################################################################################
-
-## Merge all variants to one file per input sample:
-echo ''
-echo '[INFO]: Merging variants to one file'
-cd ./fpfilter_passed
-ls RG*.vcf | head -n 1 | xargs grep '#' > ${BASENAME}_header.txt
-cat RG*.vcf | mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n --parallel=8"}' | \
-  cat ${BASENAME}_header.txt /dev/stdin | bgzip -@ 8 > ${BASENAME}_Somatic.vcf.gz &&
-  tabix -p vcf ${BASENAME}_Somatic.vcf.gz &&
-  rm ${BASENAME}*.vcf
 
 #####################################################################################################
 
