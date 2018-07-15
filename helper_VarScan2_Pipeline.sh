@@ -12,29 +12,29 @@
 #SBATCH --mail-user=foo@bar.com
 #######
 #######
-BAMTUMOR=/path/to/tumor.bam
-BAMNORMAL=/path/to/normal.bam
-BASENAME=foobar
+BAMTUMOR="/path/to/tumor.bam"
+BAMNORMAL="/path/to/normal.bam"
+BASENAME="foobar"
 #######
 ########################################################################################################################
 ########################################################################################################################
 
 command -v samtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: samtools is not in PATH"; exit 1; }
 
-if [[ ! -e $TUMOR ]]; then echo '[ERROR]: Tumor BAM is missing - exiting' && exit 1; fi
-if [[ ! -e ${TUMOR}.bai ]]; then
+if [[ ! -e $BAMTUMOR ]]; then echo '[ERROR]: Tumor BAM is missing - exiting' && exit 1; fi
+if [[ ! -e ${BAMTUMOR}.bai ]]; then
   echo '[ERROR]: Tumor BAM is not indexed - indexing now:'
   sambamba index -t 16 $1
   fi
 
-if [[ ! -e $NORMAL ]]; then echo '[ERROR]: Normal BAM is missing - exiting' && exit 1; fi
-if [[ ! -e ${NORMAL}.bai ]]; then
+if [[ ! -e $BAMNORMAL ]]; then echo '[ERROR]: Normal BAM is missing - exiting' && exit 1; fi
+if [[ ! -e ${BAMNORMAL}.bai ]]; then
   echo '[ERROR]: Normal BAM is not indexed - indexing now:'
   sambamba index -t 16 $2
   fi
   
 if [[ ! -e primary_chr.bed ]]; then
-  samtools idxstats $TUMORBAM | \
+  samtools idxstats $BAMTUMOR | \
   awk 'OFS="\t" {if ($1 == "*") next}; {print $1, "0", $2}' | \
   grep -v -E 'chrU|random|chrM' > primary_chr.bed
   fi
@@ -45,7 +45,7 @@ if [[ ! -e primary_chr.bed ]]; then
 ## Parallelize variant calling by splitting up the task in number(chromosome) using GNU parallel:
 cat primary_chr.bed | \
   awk '{print $1":"$2+1"-"$3}' | \
-  parallel "./VarScan2_Pipeline.sh $BAMTUMOR $BAMNORMAL ${BASENAME}_{} {}"
+  parallel "./VarScan2_Pipeline.sh ${BAMTUMOR} ${BAMNORMAL} ${BASENAME}_{} {}"
 
 ########################################################################################################################
 ########################################################################################################################
