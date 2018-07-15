@@ -38,8 +38,12 @@ command -v bedtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: bedtools is not in P
 command -v mawk >/dev/null 2>&1 || { echo >&2 "[ERROR]: mawk is not in PATH"; exit 1; }
 command -v bgzip >/dev/null 2>&1 || { echo >&2 "[ERROR]: bgzip is not in PATH"; exit 1; }
 
-EXIT=$(echo '[ERROR]: varscan2 must be set as an alias -- alias varscan2="java jar /path/to/varscan2.2jar' && exit 1)
-alias varscan2 2>/dev/null >/dev/null || $EXIT
+## Check if varscan2.jar is set as alias "varscan2"
+alias varscan2 2>/dev/null >/dev/null || \
+  { echo '[ERROR]: varscan2 executable must be set as an alias -- alias varscan2=java jar /path/to/varscan2.jar';
+    exit 1; }
+
+#####################################################################################################
 
 echo ''
 echo '[INFO]: Pipeline for' $BASENAME 'started' && date && echo ''
