@@ -6,7 +6,8 @@ Scripts related to variant calling, filtering and annotation of VCF files.
 
 ## Using VarScan2_Pipeline.sh
 This script calls variants from a tumor-normal pair, requiring only the two BAM files as input.
-It must be started with a helper script that specifies:
+In the script itself, one must specify the path to the genome.fa and the path to the varscan.jar executable.
+It must/should be started with a helper script that specifies:
 1) the full path to the bam files
 2) the basename for the output and
 3) indicate the chromosomes for the parallelization.
