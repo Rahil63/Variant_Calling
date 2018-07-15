@@ -26,6 +26,7 @@ NORMAL=$2
 BASENAME=$3
 REGION=$4
 ####
+VARSCAN2="java -jar /path/to/jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
@@ -37,12 +38,6 @@ command -v bam-readcount >/dev/null 2>&1 || { echo >&2 "[ERROR]: bam-readcount i
 command -v bedtools >/dev/null 2>&1 || { echo >&2 "[ERROR]: bedtools is not in PATH"; exit 1; }
 command -v mawk >/dev/null 2>&1 || { echo >&2 "[ERROR]: mawk is not in PATH"; exit 1; }
 command -v bgzip >/dev/null 2>&1 || { echo >&2 "[ERROR]: bgzip is not in PATH"; exit 1; }
-
-## Check if varscan2.jar is set as alias "varscan2"
-function error_alias {
-  echo '[ERROR]: varscan2 executable must be set as an alias -- alias varscan2=java jar /path/to/varscan2.jar'
-  exit 1
-}; alias varscan2 2>/dev/null >/dev/null || ${error_alias}
 
 #####################################################################################################
 
@@ -78,7 +73,7 @@ echo '[MAIN]: VarScan mpileup/somatic:'
 samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
   <(samtools view -bu -@ 2 $NORMAL $REGION) \
   <(samtools view -bu -@ 2 $TUMOR $REGION) | \
-    varscan2 somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
+    $VARSCAN2 somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
 
 cd ./VCF
 
@@ -93,8 +88,8 @@ if [[ ! -d processSomatic ]]
 
 echo ''
 echo '[MAIN]: VarScan processSomatic'
-cat ${BASENAME}.snp.vcf | varscan2 processSomatic ./processSomatic/${BASENAME}.snp.vcf --max-normal-freq 0.01 
-cat ${BASENAME}.indel.vcf | varscan2 processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
+cat ${BASENAME}.snp.vcf | $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.snp.vcf --max-normal-freq 0.01 
+cat ${BASENAME}.indel.vcf | $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
 
 ## Sort high-confidence variants into separate folder:
 cd ./processSomatic
@@ -151,11 +146,11 @@ mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
 if ((${#MAPFILE[@]} > 0)); then
   
   echo '[MAIN]: Applying false-positive filter:' && echo ''
-  varscan2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
     --output-file ${BASENAME}.snp.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.snp.Somatic.hc_failed.vcf
   echo ''
 
-  varscan2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
     --output-file ${BASENAME}.indel.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.indel.Somatic.hc_failed.vcf
   echo ''
 
@@ -165,11 +160,11 @@ mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
   
 if ((${#MAPFILE[@]} > 0)); then  
 
-  varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
     --output-file ${BASENAME}.snp.LOH.hc_passed.vcf --filtered-file ${BASENAME}.snp.LOH.hc_failed.vcf
   echo ''
 
-  varscan2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
     --output-file ${BASENAME}.indel.LOH.hc_passed.vcf --filtered-file ${BASENAME}.indel.LOH.hc_failed.vcf
   echo ''
 
