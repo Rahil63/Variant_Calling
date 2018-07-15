@@ -12,9 +12,9 @@
 #SBATCH --mail-user=foo@bar.com
 #######
 #######
-BAMTUMOR="/path/to/tumor.bam"
-BAMNORMAL="/path/to/normal.bam"
-BASENAME="foobar"
+BAMTUMOR=/path/to/tumor.bam
+BAMNORMAL=/path/to/normal.bam
+BASENAME=foobar
 #######
 ########################################################################################################################
 ########################################################################################################################
@@ -34,7 +34,7 @@ if [[ ! -e ${NORMAL}.bai ]]; then
   fi
   
 if [[ ! -e primary_chr.bed ]]; then
-  samtools idxstats $TUMORBAM
+  samtools idxstats $TUMORBAM | \
   awk 'OFS="\t" {if ($1 == "*") next}; {print $1, "0", $2}' | \
   grep -v -E 'chrU|random|chrM' > primary_chr.bed
   fi
