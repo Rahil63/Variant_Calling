@@ -22,7 +22,7 @@ export LC_ALL=en_US.UTF-8
 BAM=$1
 BASENAME=$2
 ####
-VARSCAN2="java -jar $HOME/software_2c/VarScan.v2.4.3.jar"
+VARSCAN2="java -jar -Xmx2g $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
@@ -52,26 +52,25 @@ if [[ ! -d ./VCF ]]; then mkdir VCF; fi
 
 if [[ ! -e $BAM ]]; then echo '[ERROR]: Tumor BAM is missing - exiting' && exit 1; fi
 if [[ ! -e ${BAM}.bai ]]; then
-  echo '[ERROR]: BAM is not indexed - indexing now:'
+  echo '[INFO]: BAM is not indexed - indexing now:'
   sambamba index -t 16 $1
   fi
 
 #####################################################################################################
 
-## Raw variants in parallel over all chromosomes:
-echo '[MAIN]: VarScan2:'
+## Raw variants in parallel over all chromosomes that have reads and are not U, random or M:
+echo '[MAIN]: VarScan2'
 
-samtools idxstats $BAM | \
-  awk 'OFS="\t" {if ($1 == "*") next}; {print $1, "0", $2}' | \
-  grep -v -E 'chrU|random|chrM' | \
-  awk '{print $1":"$2+10"-"$3-10}' | \
+samtools idxstats tmp.bam | 
+  mawk '$3 != "0" {print $1":2-"$2}' | \
     parallel "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
-                <(samtools view -bu -@ 2 $BAM {}) | \
+              <(samtools view -bu -@ 2 $BAM {}) | \
                 $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf"
 
 cd ./VCF
 
 ## Merge variants per chomosome into one file:
+echo '[MAIN]: Merging variants per chromosome into one file'
 ls ${BASENAME}*.vcf | head -n 1 | xargs head -n 1000 | grep '#' | \
 cat /dev/stdin ${BASENAME}*.vcf | \
   mawk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > ${BASENAME}_raw.vcf
@@ -104,7 +103,7 @@ if ((${#MAPFILE[@]}==0)); then
 
 ## Now get data from bam-readcount for both the tumor and normal file:
 echo '[MAIN]: Getting data from bam-readcount:' && echo ''
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 $BAM | \
+bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 ${BAM} | \
   bgzip -@ 6 > ${BASENAME}-t.bamRC.gz
 echo ''
 
