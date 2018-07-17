@@ -26,7 +26,7 @@ NORMAL=$2
 BASENAME=$3
 REGION=$4
 ####
-VARSCAN2="java -jar -Xmx3g /path/to/jar"
+VARSCAN2="java -jar /path/to/jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
