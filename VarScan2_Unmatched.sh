@@ -52,7 +52,8 @@ if [[ ! -d ./VCF ]]; then mkdir VCF; fi
 
 if [[ ! -e $BAM ]]; then echo '[ERROR]: BAM is missing - exiting' && exit 1; fi
 if [[ ! -e ${BAM}.bai ]]; then
-  echo '[INFO]: BAM is not indexed - indexing now:'
+  echo '[INFO]: BAM is cd ..
+  samtools idxstatsnot indexed - indexing now:'
   sambamba index -t 16 $1
   fi
 
@@ -61,7 +62,8 @@ if [[ ! -e ${BAM}.bai ]]; then
 ## Raw variants in parallel over all chromosomes that have reads and are not U, random or M:
 echo '[MAIN]: VarScan2'
 
-samtools idxstats tmp.bam | 
+samtools idxstats $BAM | \
+  grep -vE 'chrU|chrM|random|\*' | \
   mawk '$3 != "0" {print $1":2-"$2}' | \
     parallel "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
               <(samtools view -bu -@ 2 $BAM {}) | \
