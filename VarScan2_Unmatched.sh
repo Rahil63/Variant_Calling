@@ -50,7 +50,7 @@ if [[ ! -d ./VCF ]]; then mkdir VCF; fi
 
 #####################################################################################################
 
-if [[ ! -e $BAM ]]; then echo '[ERROR]: Tumor BAM is missing - exiting' && exit 1; fi
+if [[ ! -e $BAM ]]; then echo '[ERROR]: BAM is missing - exiting' && exit 1; fi
 if [[ ! -e ${BAM}.bai ]]; then
   echo '[INFO]: BAM is not indexed - indexing now:'
   sambamba index -t 16 $1
@@ -115,8 +115,7 @@ mapfile -n 1 < <(bgzip -c -d ${BASENAME}.bamRC.gz | awk NF)
 if ((${#MAPFILE[@]} > 0)); then
   
   echo '[MAIN]: Applying false-positive filter:' && echo ''
-  $VARSCAN2 fpfilter ${BASENAME}_raw.vcf <(bgzip -c -d -@ 6 ${BASENAME}head *.vcf
-  .bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}_raw.vcf <(bgzip -c -d -@ 6 ${BASENAME}.bamRC.gz) \
     --output-file ${BASENAME}_fppassed.vcf --filtered-file ${BASENAME}_failed.vcf
   echo ''
 
