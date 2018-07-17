@@ -58,16 +58,31 @@ if [[ ! -e ${BAM}.bai ]]; then
 
 #####################################################################################################
 
-## Raw variants:
-echo '[MAIN]: VarScan mpileup/somatic:'
-samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 $BAM | \
-  $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_raw.vcf
+## Raw variants in parallel over all chromosomes:
+echo '[MAIN]: VarScan2:'
 
-if [[ ! -e ./VCF/${BASENAME}_raw.vcf ]]; then
-  echo '[ERROR]: VCF file is empty -- exiting' && exit 1
-  fi
+samtools idxstats $BAM | \
+  awk 'OFS="\t" {if ($1 == "*") next}; {print $1, "0", $2}' | \
+  grep -v -E 'chrU|random|chrM' | \
+  awk '{print $1":"$2+1"-"$3}' | \
+    parallel "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
+                <(samtools view -bu -@ 2 $BAM {}) | \
+                $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf
+
 cd ./VCF
 
+## Merge variants per chomosome into one file:
+ls *.vcf | head -n 1 | xargs head -n 1000 | grep '#' | \
+cat /dev/stdin ${BASENAME}*.vcf | \
+  mawk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > ${BASENAME}_raw.vcf
+
+
+mapfile -n 1 < <(head -n 1000 ${BASENAME}_raw.vcf | grep -v '#' | awk NF)
+if ((${#MAPFILE[@]}==0)); then
+  echo '[WARNING]: Aborting script because no variants in file' ${BASENAME}_raw.vcf
+  exit 0
+fi  
+  
 #####################################################################################################
 
 #### BAM-READCOUNT & FPFILTER:
@@ -75,7 +90,7 @@ cd ./VCF
 ## Now concatenate all hc-VCF of one sample, sort and make a bed file of it for bam-readcount:
 echo ''
 echo '[MAIN]: Preparing region list for bam-readcount:' && echo ''
-egrep -hv "^#" ${BASENAME}*.vcf | \
+egrep -hv "^#" ${BASENAME}_raw.vcf | \
   mawk 'OFS="\t" {print $1, $2-10, $2+10}' | \
   sort -k1,1 -k2,2n --parallel=8 | \
   bedtools merge -i - > ${BASENAME}_bamRC_template.bed
