@@ -4,7 +4,7 @@ Scripts related to variant calling, filtering and annotation of VCF files.
 #####################################################################################################################
 #####################################################################################################################
 
-## Using VarScan2_Pipeline.sh
+## Using VarScan2_Somatic.sh
 This script calls variants from a tumor-normal pair, requiring only the two BAM files as input.
 In the script itself, one must specify the path to the genome.fa and the path to the varscan.jar executable.
 It must/should be started with a helper script that specifies:
@@ -20,7 +20,7 @@ cat helper_script.sh
 #!/bin/bash
 cat primary_chr.bed | \
   awk '{print $1":"$2+1"-"$3}' | \
-  parallel "./varscan2.sh /path/to/tumor.bam /path/to/normal.bam Basename_{} {}"
+  parallel "./VarScan2_Somatic.sh /path/to/tumor.bam /path/to/normal.bam Basename_{} {}"
 ```  
 In this, the primary_chr.bed is a bed file with every chromosome to be parallelized over, with its start and end coordinate,
 so start = 0 and end = length(chr). Say the Basename was FOO, then the output files would be:
