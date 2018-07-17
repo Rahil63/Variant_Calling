@@ -45,7 +45,7 @@ if [[ ! -e primary_chr.bed ]]; then
 ## Parallelize variant calling by splitting up the task in number(chromosome) using GNU parallel:
 cat primary_chr.bed | \
   awk '{print $1":"$2+1"-"$3}' | \
-  parallel "./VarScan2_Pipeline.sh ${BAMTUMOR} ${BAMNORMAL} ${BASENAME}_{} {}"
+  parallel "./VarScan2_Somatic.sh ${BAMTUMOR} ${BAMNORMAL} ${BASENAME}_{} {}"
 
 ########################################################################################################################
 ########################################################################################################################
