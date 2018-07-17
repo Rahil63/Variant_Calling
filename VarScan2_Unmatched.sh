@@ -64,7 +64,7 @@ echo '[MAIN]: VarScan2:'
 samtools idxstats $BAM | \
   awk 'OFS="\t" {if ($1 == "*") next}; {print $1, "0", $2}' | \
   grep -v -E 'chrU|random|chrM' | \
-  awk '{print $1":"$2+1"-"$3}' | \
+  awk '{print $1":"$2+10"-"$3-10}' | \
     parallel "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
                 <(samtools view -bu -@ 2 $BAM {}) | \
                 $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf"
@@ -72,7 +72,7 @@ samtools idxstats $BAM | \
 cd ./VCF
 
 ## Merge variants per chomosome into one file:
-ls *.vcf | head -n 1 | xargs head -n 1000 | grep '#' | \
+ls ${BASENAME}*.vcf | head -n 1 | xargs head -n 1000 | grep '#' | \
 cat /dev/stdin ${BASENAME}*.vcf | \
   mawk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > ${BASENAME}_raw.vcf
 
@@ -91,7 +91,7 @@ fi
 echo ''
 echo '[MAIN]: Preparing region list for bam-readcount:' && echo ''
 egrep -hv "^#" ${BASENAME}_raw.vcf | \
-  mawk 'OFS="\t" {print $1, $2-10, $2+10}' | \
+  mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
   sort -k1,1 -k2,2n --parallel=8 | \
   bedtools merge -i - > ${BASENAME}_bamRC_template.bed
 
@@ -116,7 +116,8 @@ mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
 if ((${#MAPFILE[@]} > 0)); then
   
   echo '[MAIN]: Applying false-positive filter:' && echo ''
-  $VARSCAN2 fpfilter ${BASENAME}_raw.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
+  $VARSCAN2 fpfilter ${BASENAME}_raw.vcf <(bgzip -c -d -@ 6 ${BASENAME}head *.vcf
+  .bamRC.gz) \
     --output-file ${BASENAME}_fppassed.vcf --filtered-file ${BASENAME}_failed.vcf
   echo ''
 
