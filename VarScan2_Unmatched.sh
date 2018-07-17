@@ -19,7 +19,7 @@ export LC_ALL=en_US.UTF-8
 #####################################################################################################
 ####
 #### Tumor and Normal are supposed to be full paths to the bam files:
-BAM=$1
+BAM=$(realpath $1)
 BASENAME=$2
 ####
 VARSCAN2="java -jar -Xmx2g $HOME/software_2c/VarScan.v2.4.3.jar"
@@ -104,13 +104,13 @@ if ((${#MAPFILE[@]}==0)); then
 ## Now get data from bam-readcount for both the tumor and normal file:
 echo '[MAIN]: Getting data from bam-readcount:' && echo ''
 bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 ${BAM} | \
-  bgzip -@ 6 > ${BASENAME}-t.bamRC.gz
+  bgzip -@ 6 > ${BASENAME}.bamRC.gz
 echo ''
 
 #####################################################################################################
 
 ## Apply fpfilter in case the bamRC files are not empty due to whatever reason:
-mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
+mapfile -n 1 < <(bgzip -c -d ${BASENAME}.bamRC.gz | awk NF)
 
 if ((${#MAPFILE[@]} > 0)); then
   
