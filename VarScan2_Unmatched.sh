@@ -69,14 +69,13 @@ samtools idxstats $BAM | \
               <(samtools view -bu -@ 2 $BAM {}) | \
                 $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf"
 
-cd ./VCF
+cd ./VCF && echo ''
 
 ## Merge variants per chomosome into one file:
 echo '[MAIN]: Merging variants per chromosome into one file'
-ls ${BASENAME}*.vcf | head -n 1 | xargs head -n 1000 | grep '#' | \
-cat /dev/stdin ${BASENAME}*.vcf | \
-  mawk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' > ${BASENAME}_raw.vcf
 
+cat ${BASENAME}*.vcf | mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n"}' | \
+  cat <(ls ${BASENAME}*.vcf | head -n 1 | xargs head -n 1000 | grep '#') /dev/stdin > ${BASENAME}_raw.vcf
 
 mapfile -n 1 < <(head -n 1000 ${BASENAME}_raw.vcf | grep -v '#' | awk NF)
 if ((${#MAPFILE[@]}==0)); then
