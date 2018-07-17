@@ -67,7 +67,7 @@ samtools idxstats $BAM | \
   awk '{print $1":"$2+1"-"$3}' | \
     parallel "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
                 <(samtools view -bu -@ 2 $BAM {}) | \
-                $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf
+                $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}_raw.vcf"
 
 cd ./VCF
 
