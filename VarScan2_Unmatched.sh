@@ -12,9 +12,6 @@ export LC_ALL=en_US.UTF-8
 #### 
 #### with fpfilter. For fpfilter, bam-readcount is used to extract the necessary info
 #### directly from the BAM files.
-#### $4 is the region argument as chr:start-end to enable parallelization with GNU parallel,
-#### USAGE: cat regions.txt | parallel "./VarScan2.sh tumor.bam normal.bam samplename_{} {}"
-#### Variants per chromosome must then later be combined separately.
 ####
 #####################################################################################################
 ####
