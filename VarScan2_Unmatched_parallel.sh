@@ -9,13 +9,11 @@ export LC_ALL=en_US.UTF-8
 #### Also assumes samtools, sambamba and bam-readcount in PATH, and path to varscan.jar specified
 #### in this script.
 #### Raw variants are called with VarScan2 mpileup2cns, then split into somatic and germis by
-#### 
-#### with fpfilter. For fpfilter, bam-readcount is used to extract the necessary info
-#### directly from the BAM files.
+#### with fpfilter. For fpfilter, bam-readcount is used to extract the necessary info directly from the BAM files.
 ####
 #####################################################################################################
 ####
-#### Tumor and Normal are supposed to be full paths to the bam files:
+#### USAGE: ./VarScan2_Unmatched.sh BAM BASENAME
 BAM=$(realpath $1)
 BASENAME=$2
 ####
