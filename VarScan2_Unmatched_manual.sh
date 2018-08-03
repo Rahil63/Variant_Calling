@@ -58,7 +58,7 @@ if [[ ! -e ${BAM}.bai ]]; then
 ## Raw variants in parallel over all chromosomes that have reads and are not U, random or M:
 echo '[MAIN]: VarScan2'
 
-samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 <(samtools view -bu -@ 2 $BAM {}) | \
+samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 <(samtools view -bu -@ 2 $BAM $REGION) | \
   $VARSCAN2 mpileup2cns --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_${REGION}_raw.vcf
 
 cd ./VCF && echo ''
