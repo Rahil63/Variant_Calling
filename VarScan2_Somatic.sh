@@ -125,7 +125,7 @@ echo ''
 
 #### BAM-READCOUNT & FPFILTER:
 echo '[MAIN]: preparing bamRC BED files:' && echo ''
-#### Parallelize this with parallel, because bam-rc is slow and fpfilter is memory-intensive for the germlines:
+
 zcat ${BASENAME}.Somatic.hc.vcf.gz | 
   grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
   sort -k1,1 -k2,2n --parallel=16 | \
@@ -143,45 +143,46 @@ zcat ${BASENAME}.LOH.hc.vcf.gz |
 
 #####################################################################################################
 
-echo '[MAIN]: Getting data from bam-readcount:' && echo ''
+echo '[MAIN]: Bam-Readcount:' && echo ''
 
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $TUMOR | \
-  bgzip -@ 6 > ${BASENAME}-Somatic.bamRC.gz
+if [[ ! $(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $TUMOR | \
+    bgzip -@ 6 > ${BASENAME}-Somatic.bamRC.gz
+    
+  $VARSCAN2 fpfilter \
+    <(bgzip -c -d -@ 2 ${BASENAME}.Somatic.hc.vcf.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}.Somatic_bamRC.bed.gz) \
+    --output-file ${BASENAME}.Somatic.hc_fppassed.vcf \
+    --filtered-file ${BASENAME}.Somatic.hc_fpfailed.vcf \
+    --dream3-settings && echo ''
+  fi
+
+if [[ ! $(bgzip -c -d ${BASENAME}.Germline.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
+    bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
   
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
-  bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
   
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
-  bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
+  $VARSCAN2 fpfilter \
+    <(bgzip -c -d -@ 2 ${BASENAME}.Germline.hc.vcf.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}.Germline_bamRC.bed.gz) \
+    --output-file ${BASENAME}.Germline.hc_fppassed.vcf \
+    --filtered-file ${BASENAME}.Germline.hc_fpfailed.vcf \
+    --dream3-settings && echo ''
+  fi
+
+if [[ ! $(bgzip -c -d ${BASENAME}.LOH.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
+    bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
+  
+  $VARSCAN2 fpfilter \
+    <(bgzip -c -d -@ 2 ${BASENAME}.LOH.hc.vcf.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}.LOH_bamRC.bed.gz) \
+    --output-file ${BASENAME}.LOH.hc_fppassed.vcf \
+    --filtered-file ${BASENAME}.LOH.hc_fpfailed.vcf \
+    --dream3-settings && echo ''
+  fi  
   
 echo ''
-
-#####################################################################################################
-
-## Apply fpfilter in case the bamRC files are not empty due to whatever reason:
-
-echo '[MAIN]: Applying false-positive filter:' && echo ''
-
-$VARSCAN2 fpfilter \
-  <(bgzip -c -d -@ 2 ${BASENAME}.Somatic.hc.vcf.gz) \
-  <(bgzip -c -d -@ 2 ${BASENAME}.Somatic_bamRC.bed.gz) \
-  --output-file ${BASENAME}.Somatic.hc_fppassed.vcf \
-  --filtered-file ${BASENAME}.Somatic.hc_fpfailed.vcf \
-  --dream3-settings && echo ''
-  
-$VARSCAN2 fpfilter \
-  <(bgzip -c -d -@ 2 ${BASENAME}.Germline.hc.vcf.gz) \
-  <(bgzip -c -d -@ 2 ${BASENAME}.Germline_bamRC.bed.gz) \
-  --output-file ${BASENAME}.Germline.hc_fppassed.vcf \
-  --filtered-file ${BASENAME}.Germline.hc_fpfailed.vcf \
-  --dream3-settings && echo ''
-  
-$VARSCAN2 fpfilter \
-  <(bgzip -c -d -@ 2 ${BASENAME}.LOH.hc.vcf.gz) \
-  <(bgzip -c -d -@ 2 ${BASENAME}.LOH_bamRC.bed.gz) \
-  --output-file ${BASENAME}.LOH.hc_fppassed.vcf \
-  --filtered-file ${BASENAME}.LOH.hc_fpfailed.vcf \
-  --dream3-settings && echo ''
 
 if [[ ! -d fpfilter_passed ]]
   then
