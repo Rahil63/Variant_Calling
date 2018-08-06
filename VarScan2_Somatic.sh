@@ -98,13 +98,12 @@ if [[ ! -d processSomatic ]]
   fi
 
 ## Use processSomatic to split into LOH, Germline and SNP, with and without high-confidence.
-
 echo ''
 echo '[MAIN]: VarScan processSomatic'
 bgzip -c -d ${BASENAME}_raw.vcf.gz | \
   $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.vcf
 
-## Sort high-confidence variants into separate folder:
+## Sort high-confidence variants into separate folder and compress:
 cd ./processSomatic
 
 ls ${BASENAME}*.vcf | parallel "bgzip -@ 4 {}"
@@ -120,37 +119,41 @@ mv ${BASENAME}*Germline.hc* ./VCF_High_Confidence
 
 cd ./VCF_High_Confidence
 
+ls ${BASENAME}*.vcf.gz | parallel "tabix -p vcf {}"
 
 #####################################################################################################
 
 #### BAM-READCOUNT & FPFILTER:
 
-## Now concatenate all hc-VCF of one sample, sort and make a bed file of it for bam-readcount:
+#### Parallelize this with parallel, because bam-rc is slow and fpfilter is memory-intensive for the germlines:
+
+## Get the chromosomes that have entries:
+tabix -l ${BASENAME}.Somatic*.gz > ${BASENAME}_chr_somatic.txt
+tabix -l ${BASENAME}.LOH*.gz > ${BASENAME}_chr_loh.txt
+tabix -l ${BASENAME}.Germline*.gz > ${BASENAME}_chr_germ.txt
+
+## Split the combined VCF into VCF-by-chromosome:
+cat ${BASENAME}_chr_somatic.txt | parallel "tabix -h ${BASENAME}.Somatic.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.Somatic.vcf.gz"
+cat ${BASENAME}_chr_loh.txt | parallel "tabix -h ${BASENAME}.LOH.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.LOH.vcf.gz"
+cat ${BASENAME}_chr_germ.txt | parallel "tabix -h ${BASENAME}.Germline.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.Germline.vcf.gz"
+
+## Template for bam-readcount:
 echo ''
 echo '[MAIN]: Preparing region list for bam-readcount:' && echo ''
-##
-ls ${BASENAME}_*.Somatic.vcf | \
-  awk -F "_chr" '{print $1}' | \
-  
-
-egrep -hv "^#" ${BASENAME}*.hc.vcf | \
-  mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
-  sort -k1,1 -k2,2n --parallel=8 | \
-  bedtools merge -i - > ${BASENAME}_bamRC_template.bed
-  
-  
-  
-  
-  
-
-## Abort if template file is empty:
-mapfile -n 1 < ${BASENAME}_bamRC_template.bed
-if ((${#MAPFILE[@]}==0)); then
-  echo '[WARNING]: Aborting script because no variants made it to this point (template for bamRC)'
-  exit 0
-  fi
+for i in ${BASENAME}_*.vcf.gz 
+  do
+  BNAME=${i%.vcf.gz}
+  bgzip -c -d $i | grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
+  sort -k1,1 -k2,2n --parallel=16 | \
+  bedtools merge -i - | bgzip -@ 2 > ${BNAME}_template_bamRC.bed.gz
+  done
 
 ## Now get data from bam-readcount for both the tumor and normal file:
+
+
+
+
+
 echo '[MAIN]: Getting data from bam-readcount:' && echo ''
 bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 $TUMOR | \
   bgzip -@ 6 > ${BASENAME}-t.bamRC.gz
