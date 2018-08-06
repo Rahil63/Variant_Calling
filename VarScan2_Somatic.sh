@@ -72,8 +72,8 @@ samtools idxstats $TUMOR | \
   mawk '$3 != "0" {print $1":2-"$2}' |
     parallel \
       "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
-        <(samtools view -bu -@ 2 $NORMAL {}) \
-        <(samtools view -bu -@ 2 $TUMOR {}) | \
+        <(sambamba view -t 2 -f bam -l 0 $NORMAL {}) \
+        <(sambamba view -t 2 -f bam -l 0 $TUMOR {}) | \
           $VARSCAN2 somatic /dev/stdin ./VCF/${BASENAME}_{} -mpileup --strand-filter 1 --output-vcf"
 
 cd ./VCF
@@ -160,7 +160,6 @@ if [[ -e ${BASENAME}.Somatic_bamRC.bed.gz ]]; then
 if [[ -e $(bgzip -c -d ${BASENAME}.Germline.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
-  
   
   $VARSCAN2 fpfilter \
     <(bgzip -c -d -@ 2 ${BASENAME}.Germline.hc.vcf.gz) \
