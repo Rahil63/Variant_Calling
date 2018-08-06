@@ -145,7 +145,7 @@ zcat ${BASENAME}.LOH.hc.vcf.gz |
 
 echo '[MAIN]: Bam-Readcount:' && echo ''
 
-if [[ ! $(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+if [[ -e ${BASENAME}.Somatic_bamRC.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $TUMOR | \
     bgzip -@ 6 > ${BASENAME}-Somatic.bamRC.gz
     
@@ -157,7 +157,7 @@ if [[ ! $(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz | head -n 10 | awk NF | w
     --dream3-settings && echo ''
   fi
 
-if [[ ! $(bgzip -c -d ${BASENAME}.Germline.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+if [[ -e $(bgzip -c -d ${BASENAME}.Germline.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
   
@@ -170,7 +170,7 @@ if [[ ! $(bgzip -c -d ${BASENAME}.Germline.bed.gz | head -n 10 | awk NF | wc -l)
     --dream3-settings && echo ''
   fi
 
-if [[ ! $(bgzip -c -d ${BASENAME}.LOH.bed.gz | head -n 10 | awk NF | wc -l) -eq 0 ]]; then
+if [[ -e $(bgzip -c -d ${BASENAME}.LOH.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
   
@@ -189,14 +189,14 @@ if [[ ! -d fpfilter_passed ]]
   mkdir fpfilter_passed
   fi
 
-ls *fppassed.vcf | parallel "bgzip {}"
+ls *.vcf | parallel "bgzip {}"
 ls *fppassed.vcf.gz | parallel "tabix -p vcf {}"
 
 mv ${BASENAME}*_fppassed.vcf* ./fpfilter_passed
 
 #####################################################################################################
 
-echo '[FINISHED]: Pipeline finished on:' && date
+echo '[FINISHED]: Pipeline for' $BASENAME 'finished on:' && date
 echo '###############################################################################################'
 
 #####################################################################################################
