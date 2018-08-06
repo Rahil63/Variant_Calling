@@ -7,26 +7,24 @@ export LC_ALL=en_US.UTF-8
 #####################################################################################################
 ####
 #### Bash script for variant calling with samtools mpileup | VarScan2.
-#### Script assumes that a pair of tumor-normal BAM files is present in the dir where the script is.
+#### Script assumes that a pair of tumor-normal BAM files is present in the dir where the script is started from.
 #### Also assumes samtools, sambamba and bam-readcount in PATH, and path to varscan.jar specified
 #### in this script as VARSCAN="java -jar /path/to/varscan.jar"
-#### Raw variants are called with VarScan2 somatic, then split into somatic and germis by
+#### Raw variants are called with VarScan2 somatic, then split into somatic and germs by
 #### processSomatic, selected for high-confidence variants and filtered for junk calls
 #### with fpfilter. For fpfilter, bam-readcount is used to extract the necessary info
 #### directly from the BAM files.
-#### $4 is the region argument as chr:start-end to enable parallelization with GNU parallel,
-#### USAGE: cat regions.txt | parallel "./VarScan2.sh tumor.bam normal.bam samplename_{} {}"
-#### Variants per chromosome must then later be combined separately.
+#### GNU parallel is used to parallelize the job over all chromosomes.
+#### ./VarScan2.sh tumor.bam normal.bam samplename
 ####
 #####################################################################################################
 ####
 #### Tumor and Normal are supposed to be full paths to the bam files:
-TUMOR=$1
-NORMAL=$2
+TUMOR=$(realpath $1)
+NORMAL=$(realpath $2)
 BASENAME=$3
-REGION=$4
 ####
-VARSCAN2="java -jar /path/to/jar"
+VARSCAN2="java -jar $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
@@ -68,12 +66,15 @@ if [[ ! -e ${NORMAL}.bai ]]; then
 
 #####################################################################################################
 
-## Raw variants:
-echo '[MAIN]: VarScan mpileup/somatic:'
-samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
-  <(samtools view -bu -@ 2 $NORMAL $REGION) \
-  <(samtools view -bu -@ 2 $TUMOR $REGION) | \
-    $VARSCAN2 somatic /dev/stdin ./VCF/${BASENAME} -mpileup --strand-filter 1 --output-vcf
+echo '[MAIN]: Calling raw variants over all chromosomes:'
+samtools idxstats $TUMOR | \
+  grep -vE 'chrU|chrM|random|\*' | \
+  mawk '$3 != "0" {print $1":2-"$2}' |
+    parallel \
+      "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
+        <(samtools view -bu -@ 2 $NORMAL {}) \
+        <(samtools view -bu -@ 2 $TUMOR {}) | \
+          $VARSCAN2 somatic /dev/stdin ./VCF/${BASENAME}_{} -mpileup --strand-filter 1 --output-vcf"
 
 cd ./VCF
 
@@ -88,7 +89,17 @@ if [[ ! -d processSomatic ]]
 
 echo ''
 echo '[MAIN]: VarScan processSomatic'
-cat ${BASENAME}.snp.vcf | $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.snp.vcf --max-normal-freq 0.01 
+
+ls ${BASENAME}*.snp.vcf | \
+  parallel \
+    "$VARSCAN2 processSomatic ./processSomatic/${BASENAME}_{}.snp.vcf --max-normal-freq 0.01"
+ 
+ 
+ls ${BASENAME}*.indel.vcf | \
+  parallel \
+    "$VARSCAN2 processSomatic ./processSomatic/${BASENAME}_{}.snp.vcf --max-normal-freq 0.01"
+    
+    
 cat ${BASENAME}.indel.vcf | $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
 
 ## Sort high-confidence variants into separate folder:
