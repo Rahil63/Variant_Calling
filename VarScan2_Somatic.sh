@@ -146,36 +146,36 @@ zcat ${BASENAME}.LOH.hc.vcf.gz |
 echo '[MAIN]: Bam-Readcount:' && echo ''
 
 if [[ -e ${BASENAME}.Somatic_bamRC.bed.gz ]]; then
-  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $TUMOR | \
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l <(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz) -w 1 $TUMOR | \
     bgzip -@ 6 > ${BASENAME}-Somatic.bamRC.gz
     
   $VARSCAN2 fpfilter \
     <(bgzip -c -d -@ 2 ${BASENAME}.Somatic.hc.vcf.gz) \
-    <(bgzip -c -d -@ 2 ${BASENAME}.Somatic_bamRC.bed.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}-Somatic.bamRC.gz) \
     --output-file ${BASENAME}.Somatic.hc_fppassed.vcf \
     --filtered-file ${BASENAME}.Somatic.hc_fpfailed.vcf \
     --dream3-settings && echo ''
   fi
 
 if [[ -e ${BASENAME}.Germline.bed.gz ]]; then
-  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l <(bgzip -c -d ${BASENAME}.Germline_bamRC.bed.gz) -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
   
   $VARSCAN2 fpfilter \
     <(bgzip -c -d -@ 2 ${BASENAME}.Germline.hc.vcf.gz) \
-    <(bgzip -c -d -@ 2 ${BASENAME}.Germline_bamRC.bed.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}-Germline.bamRC.gz) \
     --output-file ${BASENAME}.Germline.hc_fppassed.vcf \
     --filtered-file ${BASENAME}.Germline.hc_fpfailed.vcf \
     --dream3-settings && echo ''
   fi
 
 if [[ -e ${BASENAME}.LOH.bed.gz ]]; then
-  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l <(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz) -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
   
   $VARSCAN2 fpfilter \
     <(bgzip -c -d -@ 2 ${BASENAME}.LOH.hc.vcf.gz) \
-    <(bgzip -c -d -@ 2 ${BASENAME}.LOH_bamRC.bed.gz) \
+    <(bgzip -c -d -@ 2 ${BASENAME}-LOH.bamRC.gz) \
     --output-file ${BASENAME}.LOH.hc_fppassed.vcf \
     --filtered-file ${BASENAME}.LOH.hc_fpfailed.vcf \
     --dream3-settings && echo ''
