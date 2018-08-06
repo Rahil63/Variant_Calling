@@ -157,7 +157,7 @@ if [[ -e ${BASENAME}.Somatic_bamRC.bed.gz ]]; then
     --dream3-settings && echo ''
   fi
 
-if [[ -e $(bgzip -c -d ${BASENAME}.Germline.bed.gz ]]; then
+if [[ -e ${BASENAME}.Germline.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
   
@@ -169,7 +169,7 @@ if [[ -e $(bgzip -c -d ${BASENAME}.Germline.bed.gz ]]; then
     --dream3-settings && echo ''
   fi
 
-if [[ -e $(bgzip -c -d ${BASENAME}.LOH.bed.gz ]]; then
+if [[ -e ${BASENAME}.LOH.bed.gz ]]; then
   bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
   
