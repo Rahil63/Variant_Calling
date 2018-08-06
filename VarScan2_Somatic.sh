@@ -120,85 +120,78 @@ mv ${BASENAME}*Germline.hc* ./VCF_High_Confidence
 cd ./VCF_High_Confidence
 
 ls ${BASENAME}*.vcf.gz | parallel "tabix -p vcf {}"
-
+echo ''
 #####################################################################################################
 
 #### BAM-READCOUNT & FPFILTER:
-
+echo '[MAIN]: preparing bamRC BED files:' && echo ''
 #### Parallelize this with parallel, because bam-rc is slow and fpfilter is memory-intensive for the germlines:
-
-## Get the chromosomes that have entries:
-tabix -l ${BASENAME}.Somatic*.gz > ${BASENAME}_chr_somatic.txt
-tabix -l ${BASENAME}.LOH*.gz > ${BASENAME}_chr_loh.txt
-tabix -l ${BASENAME}.Germline*.gz > ${BASENAME}_chr_germ.txt
-
-## Split the combined VCF into VCF-by-chromosome:
-cat ${BASENAME}_chr_somatic.txt | parallel "tabix -h ${BASENAME}.Somatic.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.Somatic.vcf.gz"
-cat ${BASENAME}_chr_loh.txt | parallel "tabix -h ${BASENAME}.LOH.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.LOH.vcf.gz"
-cat ${BASENAME}_chr_germ.txt | parallel "tabix -h ${BASENAME}.Germline.hc.vcf.gz {} | bgzip -@ 2 > ${BASENAME}_{}.Germline.vcf.gz"
-
-## Template for bam-readcount:
-echo ''
-echo '[MAIN]: Preparing region list for bam-readcount:' && echo ''
-for i in ${BASENAME}_*.vcf.gz 
-  do
-  BNAME=${i%.vcf.gz}
-  bgzip -c -d $i | grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
+zcat ${BASENAME}.Somatic.hc.vcf.gz | 
+  grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
   sort -k1,1 -k2,2n --parallel=16 | \
-  bedtools merge -i - | bgzip -@ 2 > ${BNAME}_template_bamRC.bed.gz
-  done
+  bedtools merge -i - | bgzip -@ 2 > ${BASENAME}.Somatic_bamRC.bed.gz
+  
+zcat ${BASENAME}.Germline.hc.vcf.gz | 
+  grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
+  sort -k1,1 -k2,2n --parallel=16 | \
+  bedtools merge -i - | bgzip -@ 2 > ${BASENAME}.Germline_bamRC.bed.gz
+  
+zcat ${BASENAME}.LOH.hc.vcf.gz | 
+  grep -v '^#' | mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
+  sort -k1,1 -k2,2n --parallel=16 | \
+  bedtools merge -i - | bgzip -@ 2 > ${BASENAME}.LOH_bamRC.bed.gz  
 
-## Now get data from bam-readcount for both the tumor and normal file:
-
-
-
-
+#####################################################################################################
 
 echo '[MAIN]: Getting data from bam-readcount:' && echo ''
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 $TUMOR | \
-  bgzip -@ 6 > ${BASENAME}-t.bamRC.gz
-bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}_bamRC_template.bed -w 1 $NORMAL | \
-  bgzip -@ 6 > ${BASENAME}-n.bamRC.gz
+
+bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $TUMOR | \
+  bgzip -@ 6 > ${BASENAME}-Somatic.bamRC.gz
+  
+bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Germline_bamRC.bed.gz -w 1 $NORMAL | \
+  bgzip -@ 6 > ${BASENAME}-Germline.bamRC.gz
+  
+bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l ${BASENAME}.Somatic_bamRC.bed.gz -w 1 $NORMAL | \
+  bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
+  
 echo ''
 
 #####################################################################################################
 
 ## Apply fpfilter in case the bamRC files are not empty due to whatever reason:
-mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
 
-if ((${#MAPFILE[@]} > 0)); then
+echo '[MAIN]: Applying false-positive filter:' && echo ''
+
+$VARSCAN2 fpfilter \
+  <(bgzip -c -d -@ 2 ${BASENAME}.Somatic.hc.vcf.gz) \
+  <(bgzip -c -d -@ 2 ${BASENAME}.Somatic_bamRC.bed.gz) \
+  --output-file ${BASENAME}.Somatic.hc_fppassed.vcf \
+  --filtered-file ${BASENAME}.Somatic.hc_fpfailed.vcf \
+  --dream3-settings && echo ''
   
-  echo '[MAIN]: Applying false-positive filter:' && echo ''
-  $VARSCAN2 fpfilter ${BASENAME}.snp.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
-    --output-file ${BASENAME}.snp.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.snp.Somatic.hc_failed.vcf
-  echo ''
-
-  $VARSCAN2 fpfilter ${BASENAME}.indel.Somatic.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-t.bamRC.gz) \
-    --output-file ${BASENAME}.indel.Somatic.hc_passed.vcf --filtered-file ${BASENAME}.indel.Somatic.hc_failed.vcf
-  echo ''
-
-  fi
-
-mapfile -n 1 < <(bgzip -c -d ${BASENAME}-t.bamRC.gz)
+$VARSCAN2 fpfilter \
+  <(bgzip -c -d -@ 2 ${BASENAME}.Germline.hc.vcf.gz) \
+  <(bgzip -c -d -@ 2 ${BASENAME}.Germline_bamRC.bed.gz) \
+  --output-file ${BASENAME}.Germline.hc_fppassed.vcf \
+  --filtered-file ${BASENAME}.Germline.hc_fpfailed.vcf \
+  --dream3-settings && echo ''
   
-if ((${#MAPFILE[@]} > 0)); then  
+$VARSCAN2 fpfilter \
+  <(bgzip -c -d -@ 2 ${BASENAME}.LOH.hc.vcf.gz) \
+  <(bgzip -c -d -@ 2 ${BASENAME}.LOH_bamRC.bed.gz) \
+  --output-file ${BASENAME}.LOH.hc_fppassed.vcf \
+  --filtered-file ${BASENAME}.LOH.hc_fpfailed.vcf \
+  --dream3-settings && echo ''
 
-  $VARSCAN2 fpfilter ${BASENAME}.snp.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
-    --output-file ${BASENAME}.snp.LOH.hc_passed.vcf --filtered-file ${BASENAME}.snp.LOH.hc_failed.vcf
-  echo ''
-
-  $VARSCAN2 fpfilter ${BASENAME}.indel.LOH.hc.vcf <(bgzip -c -d -@ 6 ${BASENAME}-n.bamRC.gz) \
-    --output-file ${BASENAME}.indel.LOH.hc_passed.vcf --filtered-file ${BASENAME}.indel.LOH.hc_failed.vcf
-  echo ''
-
-  fi
-  
 if [[ ! -d fpfilter_passed ]]
   then
   mkdir fpfilter_passed
   fi
 
-mv ${BASENAME}*_passed.vcf ./fpfilter_passed
+ls *fppassed.vcf | parallel "bgzip {}"
+ls *fppassed.vcf.gz | parallel "tabix -p vcf {}"
+
+mv ${BASENAME}*_fppassed.vcf* ./fpfilter_passed
 
 #####################################################################################################
 
