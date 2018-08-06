@@ -24,7 +24,7 @@ TUMOR=$(realpath $1)
 NORMAL=$(realpath $2)
 BASENAME=$3
 ####
-VARSCAN2="java -jar $HOME/software_2c/VarScan.v2.4.3.jar"
+VARSCAN2="java -jar -Xmx2g $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
 ####
 #####################################################################################################
