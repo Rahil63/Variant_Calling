@@ -1,6 +1,7 @@
 # some snippets (...) 
 
 ## Get the chromosomes that have entries:
+´´´
 tabix -l ${BASENAME}.Somatic*.gz > ${BASENAME}_chr_somatic.txt
 tabix -l ${BASENAME}.LOH*.gz > ${BASENAME}_chr_loh.txt
 tabix -l ${BASENAME}.Germline*.gz > ${BASENAME}_chr_germ.txt
