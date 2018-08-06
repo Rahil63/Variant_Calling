@@ -80,6 +80,18 @@ cd ./VCF
 
 #####################################################################################################
 
+## Combine snp and indel calls:
+echo ''
+echo '[MAIN]: Combining raw variants into one file'
+
+ls ${BASENAME}*.vcf | head -n 1 | xargs grep '#' > ${BASENAME}_header.txt
+
+cat ${BASENAME}*.vcf | \
+  mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n --parallel=8"}' | \
+  cat ${BASENAME}_header.txt /dev/stdin | bgzip -@ 8 > ${BASENAME}_raw.vcf.gz
+
+#####################################################################################################
+
 if [[ ! -d processSomatic ]]
   then
   mkdir processSomatic
@@ -89,21 +101,13 @@ if [[ ! -d processSomatic ]]
 
 echo ''
 echo '[MAIN]: VarScan processSomatic'
-
-ls ${BASENAME}*.snp.vcf | \
-  parallel \
-    "$VARSCAN2 processSomatic ./processSomatic/${BASENAME}_{}.snp.vcf --max-normal-freq 0.01"
- 
- 
-ls ${BASENAME}*.indel.vcf | \
-  parallel \
-    "$VARSCAN2 processSomatic ./processSomatic/${BASENAME}_{}.snp.vcf --max-normal-freq 0.01"
-    
-    
-cat ${BASENAME}.indel.vcf | $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.indel.vcf --max-normal-freq 0.01 
+bgzip -c -d ${BASENAME}_raw.vcf.gz | \
+  $VARSCAN2 processSomatic ./processSomatic/${BASENAME}.vcf
 
 ## Sort high-confidence variants into separate folder:
 cd ./processSomatic
+
+ls ${BASENAME}*.vcf | parallel "bgzip -@ 4 {}"
 
 if [[ ! -d VCF_High_Confidence ]];
   then
@@ -115,12 +119,7 @@ mv ${BASENAME}*LOH.hc* ./VCF_High_Confidence
 mv ${BASENAME}*Germline.hc* ./VCF_High_Confidence
 
 cd ./VCF_High_Confidence
-if [[ ! -d Germline ]];
-  then
-  mkdir Germline
-  fi
-  
-mv ${BASENAME}*Germline* ./Germline
+
 
 #####################################################################################################
 
@@ -129,10 +128,20 @@ mv ${BASENAME}*Germline* ./Germline
 ## Now concatenate all hc-VCF of one sample, sort and make a bed file of it for bam-readcount:
 echo ''
 echo '[MAIN]: Preparing region list for bam-readcount:' && echo ''
+##
+ls ${BASENAME}_*.Somatic.vcf | \
+  awk -F "_chr" '{print $1}' | \
+  
+
 egrep -hv "^#" ${BASENAME}*.hc.vcf | \
-  mawk 'OFS="\t" {print $1, $2-10, $2+10}' | \
+  mawk 'OFS="\t" {print $1, $2-1, $2+1}' | \
   sort -k1,1 -k2,2n --parallel=8 | \
   bedtools merge -i - > ${BASENAME}_bamRC_template.bed
+  
+  
+  
+  
+  
 
 ## Abort if template file is empty:
 mapfile -n 1 < ${BASENAME}_bamRC_template.bed
