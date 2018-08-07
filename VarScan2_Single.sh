@@ -59,7 +59,7 @@ samtools idxstats $BAM | \
     parallel \
       "samtools mpileup -q 20 -Q 25 -B -d 1000 -f $HG38 \
         <(sambamba view -t 2 -f bam -l 0 $BAM {}) | \
-          $VARSCAN2 mpileup2cns /dev/stdin ./VCF/${BASENAME}_{} --p-value 99e-02 --strand-filter 1 --output-vcf --variants"
+          $VARSCAN2 mpileup2cns /dev/stdin --p-value 99e-02 --strand-filter 1 --output-vcf --variants > ./VCF/${BASENAME}_{}.vcf"
 
 cd ./VCF
 
@@ -71,7 +71,7 @@ echo '[MAIN]: Combining raw variants into one file'
 
 ls ${BASENAME}*.vcf | head -n 1 | xargs grep '#' > ${BASENAME}_header.txt
 
-cat ${BASENAME}*.vcf | \
+cat ${BASENAME}_*.vcf | \
   mawk '$1 ~ /^#/ {next} {print $0 | "sort -k1,1 -k2,2n --parallel=8"}' | \
   cat ${BASENAME}_header.txt /dev/stdin | bgzip -@ 8 > ${BASENAME}_raw.vcf.gz
 
