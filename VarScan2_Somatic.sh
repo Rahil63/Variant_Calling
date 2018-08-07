@@ -170,7 +170,7 @@ if [[ ${BASENAME}.Germline_bamRC.bed.gz ]]; then
   fi
 
 if [[ -e ${BASENAME}.LOH_bamRC.bed.gz ]]; then
-  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l <(bgzip -c -d ${BASENAME}.Somatic_bamRC.bed.gz) -w 1 $NORMAL | \
+  bam-readcount -f $HG38 -q 20 -b 25 -d 1000 -l <(bgzip -c -d ${BASENAME}.LOH_bamRC.bed.gz) -w 1 $NORMAL | \
     bgzip -@ 6 > ${BASENAME}-LOH.bamRC.gz
   
   $VARSCAN2 fpfilter \
