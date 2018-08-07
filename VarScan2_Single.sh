@@ -14,7 +14,7 @@ export LC_ALL=en_US.UTF-8
 ####
 #### Tumor and Normal are supposed to be full paths to the bam files:
 BAM=$(realpath $1)
-BASENAME=$3
+BASENAME=$2
 ####
 VARSCAN2="java -jar -Xmx5g $HOME/software_2c/VarScan.v2.4.3.jar"
 HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
@@ -46,7 +46,7 @@ if [[ ! -d ./VCF ]]; then mkdir VCF; fi
 
 if [[ ! -e $BAM ]]; then echo '[ERROR]: Tumor BAM is missing - exiting' && exit 1; fi
 if [[ ! -e ${BAM}.bai ]]; then
-  echo '[ERROR]: Tumor BAM is not indexed - indexing now:'
+  echo '[ERROR]: BAM is not indexed - indexing now:'
   sambamba index -t 16 $1
 fi
 
