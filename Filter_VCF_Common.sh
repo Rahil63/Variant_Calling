@@ -21,7 +21,7 @@ if [[ ! -e All_20180418.vcf.gz ]]; then
 ## COMMON (=1 if MAF 1KG > 1%), TOPMED (=AF of REF and ALT in TOPMED, exact match)
 ## Use filter_vep to exclude these variants from the VCF (stdout)
 vep --fork $NFORK--vcf --format vcf --custom All_20180418_chr.vcf.gz,dbSNP151,vcf,exact,,COMMON,TOPMED \
-  -i ${IN_VCF} | \
+  -i ${IN_VCF} -o STDOUT | \
   filter_vep --filter "not dbSNP151_COMMON = 1 and not dbSNP151_TOPMED > 0.01"
   
   exit
