@@ -8,7 +8,7 @@ export LC_ALL=en_US.UTF-8
 ####
 #### Script calls variants from a single BAM file against reference genome using VarScan2,
 #### and then applies the fpfilter.
-#### ./VarScan2_Single.sh.sh in.bam samplename
+#### ./VarScan2_Unmatched.sh in.bam samplename
 ####
 #####################################################################################################
 ####
