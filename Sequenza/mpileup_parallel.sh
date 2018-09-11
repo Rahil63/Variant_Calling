@@ -1,6 +1,9 @@
 #!/bin/bash
 
-## Use samtools mpileup, parallelized over all primary chromosomes of a BAM file.
+## Use samtools mpileup, parallelized over all primary chromosomes of a BAM file,
+## and further chopped into chunks of 50000kb.
+## Reason is that the larger chr (1,2,3) always take very long, so chunking should give quiet a gain
+## in speed. Do max. of 36 threads in parallel, otherwise I/O will go crazy.
 ## Usage: ./mpileup_paralle.sh foo.bam
 ## Output would be foo.mpileup.gz
 
@@ -22,11 +25,12 @@ if [[ $# -ne 0 ]] ; then
 
 ## Mpileup parallel over chromosomes using GNU parallel:
 samtools idxstats $1 | \
-  awk 'OFS="\t" {print $1, "0", $2}' | \
   grep -vE 'chrM|chrU|random|EBV|\*' | \
+  cut -f1,2 | \
+  bedtools makewindows -g /dev/stdin -w 50000000 | \
   awk '{print $1":"$2+1"-"$3}' | \
     parallel \
-      "samtools mpileup -Q 20 -B -d 1000 -f $GENOME \
+      -j 36 "samtools mpileup -Q 20 -B -d 1000 -f $GENOME \
         <(sambamba view -t 2 -f bam -l 0 $1 {}) | bgzip -@ 2 > ${1%.bam}_{}.mpileup.gz"
 
 ####################################################################################################
