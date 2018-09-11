@@ -26,4 +26,5 @@ A symbolic link for each of these files is created in ```./Final_Variants```.
 
 ## To Do
 Write something that postprocesses the Manta calls, excluding or blacklisting breakpoints that are
-in LC regions.
+in LC regions. Problem is that standard bedtools intersect always intersects the entire interval rather than only the breakpoints.
+
