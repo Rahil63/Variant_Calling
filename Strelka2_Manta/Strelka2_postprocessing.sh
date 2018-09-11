@@ -15,13 +15,13 @@ DBSNP151="/scratch/tmp/a_toen03/Databases/dbSNP/All_20180418_chr.vcf.gz"
 ############################################################################################################################################################
 ############################################################################################################################################################
 
-echo '[INFO] Started on:' && date && echo ''
+>&2 echo'[INFO] Started on:' && date && >&2 echo''
 
 ## Add somatic variant allele frequency, see:
 ## https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md#somatic
 ## for the reference manual on this:
 
-echo '[MAIN] Getting somatic variant allele frequencies'
+>&2 echo'[MAIN] Getting somatic variant allele frequencies'
 ## Add allele frequency according to Illumina recommendation:
 
 #- Extract allelic information with bcftools for SNPs:
@@ -55,11 +55,11 @@ bcftools view -f 'PASS' somatic.indels.vcf.gz | \
 ############################################################################################################################################################
 
 
-echo '[MAIN] Writing allele frequencies into the VCF files'
+>&2 echo'[MAIN] Writing allele frequencies into the VCF files'
 
 ##- add SNP AF to VCF:
 cat <(bcftools view -h somatic.snvs.vcf.gz | grep '^##') \
-    <(echo '##FORMAT=<ID=ALTAF,Number=1,Type=Float,Description="ALT allele frequency [%] added by custom scripts following the Illumina recommendation at the Strelka2 manual page">') \
+    <(>&2 echo'##FORMAT=<ID=ALTAF,Number=1,Type=Float,Description="ALT allele frequency [%] added by custom scripts following the Illumina recommendation at the Strelka2 manual page">') \
     <(bcftools view -h somatic.snvs.vcf.gz | grep '^#CHROM') \
     <(paste <(bcftools view -H -f 'PASS' somatic.snvs.vcf.gz | mawk 'OFS = "\t" {$9=$9":ALTAF"; print $0}' | cut -f1-9) \
             <(bcftools view -H -f 'PASS' somatic.snvs.vcf.gz | cut -f10 | paste -d ":" /dev/stdin snp.AFnormal.txt) \
@@ -67,7 +67,7 @@ cat <(bcftools view -h somatic.snvs.vcf.gz | grep '^##') \
 
 ##- add Indel AF to VCF:
 cat <(bcftools view -h somatic.indels.vcf.gz | grep '^##' | grep -vE 'bcftools|chrU|_random') \
-    <(echo '##FORMAT=<ID=ALTAF,Number=1,Type=Float,Description="ALT allele frequency [%] added by custom scripts following the Illumina recommendation at the Strelka2 manual page">') \
+    <(>&2 echo'##FORMAT=<ID=ALTAF,Number=1,Type=Float,Description="ALT allele frequency [%] added by custom scripts following the Illumina recommendation at the Strelka2 manual page">') \
     <(bcftools view -h somatic.indels.vcf.gz | grep '^#CHROM') \
     <(paste <(bcftools view -H -f 'PASS' somatic.indels.vcf.gz | mawk 'OFS = "\t" {$9=$9":ALTAF"; print $0}' | cut -f1-9) \
             <(bcftools view -H -f 'PASS' somatic.indels.vcf.gz | cut -f10 | paste -d ":" /dev/stdin indel.AFnormal.txt) \
@@ -83,7 +83,7 @@ rm indel.AFtumor.txt
 ############################################################################################################################################################
 
 ## Combine the two intermediate files (vcfcombine from vcflib, Github)
-echo '[MAIN] Combining SNVs/InDels, excluding LC variants'
+>&2 echo'[MAIN] Combining SNVs/InDels, excluding LC variants'
 vcfcombine <(bgzip -c -d somatic.snvs.PASSED.vcf.gz) <(bgzip -c -d somatic.indels.PASSED.vcf.gz) | \
   mawk '$1 ~ /^#/ {print $0;next} {print $0 | "sort -k1,1 -k2,2n"}' | tee somatic.PASSED.vcf | \
   bedtools intersect -header -sorted -v -a - -b $LC | \
@@ -96,12 +96,12 @@ bgzip somatic.PASSED.vcf
 ############################################################################################################################################################
 
 ## Remove common variants (do not pipe vep, as it aslways complains that STDOUT.summary or so already exists):
-echo '[MAIN] Annotating with VEP & excluding common variants:'
+>&2 echo'[MAIN] Annotating with VEP & excluding common variants:'
 vep --buffer_size 50000 --no_stats --cache --everything --fork 4 --vcf --format vcf --custom $DBSNP151,dbSNP151,vcf,exact,,COMMON,TOPMED \
   -i somatic.PASSED.ExLC.vcf.gz -o  STDOUT | \
     filter_vep --filter "not dbSNP151_COMMON = 1" | bgzip -@ 6 > somatic.PASSED.ExLC.Ex1KG.vcf.gz
 
-echo '' && echo '[INFO] Ended on:' && date
+>&2 echo'' && >&2 echo'[INFO] Ended on:' && date
 ############################################################################################################################################################
 ############################################################################################################################################################
 ############################################################################################################################################################
