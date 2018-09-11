@@ -3,10 +3,12 @@
 
 ## Version last modified: 07.09.2018
 ## Alignment of paired-end data to hg38 on high-memory nodes. 6 jobs in parallel on largesmp nodes should be possible.
-## Using seqtk to interleave mate files, BWA mem for alignment, samblaster for dup. marking, and sambamba for sorting and indexing.
+## Using seqtk to interleave mate files, cutadapt for trimming,
+## BWA mem for alignment, samblaster for dup. marking, and sambamba for sorting & indexing.
 ## Usage ./script.sh BASENAME
+## Runtime for a 30-50x WGS sample, depending on traffic, between 8-12 hours.
 
-## Run with a helper script that contains the #SBATCH parameters and :
+## Run with a helper script that contains the #SBATCH parameters and the basename:
 ## ls *_1.fastq.gz | awk -F "_" '{print $1}' | parallel -j 6 "./script.sh {}"
 
 ####################################################################################################################################
