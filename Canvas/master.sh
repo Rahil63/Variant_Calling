@@ -1,19 +1,19 @@
 #!/bin/bash
 
-## Run Canvas on both tumor and normal WGS samples, assuming strelka germline calls have already been produced:
+## Run Canvas on both tumor and normal WGS samples, assuming strelka germline calls have already been produced.
+## Note, requires to be run via Make-Canvas_Scripts.sh
 
 ################################################################################################################
 ################################################################################################################
 
 DOTNET="/home/a/a_toen03/software_2c/dotnet"
 CANVAS="/home/a/a_toen03/software_2c/Canvas-1.38.0.1554+master_x64/Canvas.dll"
-
+#BASENAME=see Make-Scripts_Canvas.sh
 ################################################################################################################
 
 KMER="/scratch/tmp/a_toen03/Genomes/hg38/Canvas/kmer.fa"
 FILTER13="/scratch/tmp/a_toen03/Genomes/hg38/Canvas/filter13.bed"
 GENOME_FOLDER="/scratch/tmp/a_toen03/Genomes/hg38/Canvas"
-BASENAME=$1
 
 ################################################################################################################
 ################################################################################################################
