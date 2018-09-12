@@ -11,5 +11,12 @@ for i in *-t_*.bam; do
     <(echo 'BASENAME='${BASENAME}) \
     Canvas_master.sh \
     > Canvas_run_${BASENAME}.sh; done
-    
-  chmod +x Canvas_run_*.sh  
+
+##
+chmod +x Canvas_run_*.sh  
+
+##
+for i in Canvas_run_*.sh
+  do
+  sbatch $i
+  done
