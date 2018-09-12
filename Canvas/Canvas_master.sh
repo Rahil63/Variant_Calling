@@ -23,7 +23,7 @@ echo '[MAIN] Running somatic workflow -- time:' && date
 $DOTNET $CANVAS Somatic-WGS \
   --bam=${BASENAME}-t_SortedRmdup.bam \
   --somatic-vcf=Strelka2Dir_${BASENAME}/Somatic/results/variants/somatic.snvs.vcf.gz \
-  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/somatic.snvs.vcf.gz \
+  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/variants.vcf.gz \
   --sample-name=${BASENAME}-t \
   --output=CanvasDir_${BASENAME}/Somatic \
   --reference=${KMER} \
@@ -36,7 +36,7 @@ $DOTNET $CANVAS Somatic-WGS \
 echo '[MAIN] Running germline workflow -- time:' && date
 $DOTNET $CANVAS Germline-WGS \
   --bam=${BASENAME}-n_SortedRmdup.bam \
-  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/somatic.snvs.vcf.gz \
+  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/svariants.vcf.gz \
   --sample-name=${BASENAME}-n \
   --output=CanvasDir_${BASENAME}/Germline \
   --reference=${KMER} \
