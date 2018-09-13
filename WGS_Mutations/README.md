@@ -1,6 +1,6 @@
 # Strelka2-Manta
 This repo contains scripts to run Strelka2 and Manta on tumor/normal BAM file pairs,
-plus scripts to do postprocessing.
+plus scripts to do postprocessing. It assumes that first Manta, then Strelka, then the postprocessing script is run.
 
 ## Define_Paths.sh
 Contains all the paths to executables and files needed to run Strelka and Manta + postprocessing.
