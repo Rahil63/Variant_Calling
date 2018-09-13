@@ -11,11 +11,6 @@ Can simply be run in the same folder as the BAM files without any options.
 Same as the ```Make_MantaDirectories.sh```but for Strelka2. Can only be run after Manta workflow has 
 finished because the ```candidateSmallIndels.vcf.gz``` must be passed to Strelka2.
 
-## start_slurms.sh
-This script loops through the created directories and submits the jobs to SLURM.
-Has to be run first for Manta directories. 
-Once this is finished, ```Make_StrelkaDirectories.sh``` can be executed.
-
 ## Strelka2_postprocessing.sh
 This script postprocesses the somatic calls from Strelka2.
 Can be executed via ```start_Strelka2_postprocessing.sh``` from the base directory.
