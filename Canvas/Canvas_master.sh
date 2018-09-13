@@ -22,10 +22,10 @@ GENOME_FOLDER="/scratch/tmp/a_toen03/Genomes/hg38/Canvas"
 echo '[MAIN] Running somatic workflow -- time:' && date
 $DOTNET $CANVAS Somatic-WGS \
   --bam=${BASENAME}-t_SortedRmdup.bam \
-  --somatic-vcf=Strelka2Dir_${BASENAME}/Somatic/results/variants/somatic.snvs.vcf.gz \
-  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/variants.vcf.gz \
+  --somatic-vcf=VariantDir_${BASENAME}/Srelka2/Somatic/result/results/variants/somatic.snvs.vcf.gz \
+  --sample-b-allele-vcf=VariantDir_${BASENAME}/Strelka2/Germline/results/variants/variants.vcf.gz \
   --sample-name=${BASENAME}-t \
-  --output=CanvasDir_${BASENAME}/Somatic \
+  --output=VariantDir_${BASENAME}/Canvas/Somatic \
   --reference=${KMER} \
   --genome-folder=${GENOME_FOLDER} \
   --filter-bed=${FILTER13}
@@ -36,9 +36,9 @@ $DOTNET $CANVAS Somatic-WGS \
 echo '[MAIN] Running germline workflow -- time:' && date
 $DOTNET $CANVAS Germline-WGS \
   --bam=${BASENAME}-n_SortedRmdup.bam \
-  --sample-b-allele-vcf=Strelka2Dir_${BASENAME}/Germline/results/variants/svariants.vcf.gz \
+  --sample-b-allele-vcf=VariantDir_${BASENAME}/Strelka2/Germline/results/variants/variants.vcf.gz \
   --sample-name=${BASENAME}-n \
-  --output=CanvasDir_${BASENAME}/Germline \
+  --output=VariantDir_${BASENAME}/Canvas/Germline \
   --reference=${KMER} \
   --genome-folder=${GENOME_FOLDER} \
   --filter-bed=${FILTER13}
