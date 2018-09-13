@@ -17,10 +17,12 @@ if [[ ! -e Define_Paths.sh ]]; then
 ############################################################################################################################################################
 
 ## Take variables from this file:
-source Define_Paths.sh
+
 
 function Strelka_PP {
-
+  
+  source Define_Paths.sh
+  
   ## Enter directory with somatic raw variants:
   BASENAME=$1
   BASEDIR=$(pwd)
