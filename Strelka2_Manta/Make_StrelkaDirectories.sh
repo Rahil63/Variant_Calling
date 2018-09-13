@@ -5,15 +5,13 @@
 
 ## Assuming BAM files from WGS tumor/normal(*-t/n_SortedRmdup.bam) pairs are in $(pwd) 
 ## run the configuration scripts to create folders for variant calling
-
 ## See: https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md
 
 ############################################################################################
 ############################################################################################
 
-PRIMARY="/scratch/tmp/a_toen03/Genomes/hg38/primary_chromosomes.bed.gz"
-HG38="/scratch/tmp/a_toen03/Genomes/hg38/hg38_noALT_withDecoy.fa"
-STRELKA2="~/software_2c/strelka-2.9.7.centos6_x86_64/bin/"
+## Take variables from this file:
+source Define_Paths.sh
 
 ############################################################################################
 ############################################################################################
