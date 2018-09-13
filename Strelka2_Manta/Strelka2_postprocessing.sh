@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## Script assumes to be in the basedir of the variant calling, then loops
+## Script assumes to be in the same directory as the raw Strelka2 variants
 ## through the strelka dirs:
 ## -- adding AF to the SNVs and Indels, 
 ## -- merges the two files,
@@ -8,10 +8,12 @@
 ## -- annotates remaining stuff with VEP and 
 ## -- removes COMMON (1KG) variants.
 
-LC="/scratch/tmp/a_toen03/Genomes/hg38/hg38_sdust_sorted.bed.gz"
-DBSNP151="/scratch/tmp/a_toen03/Databases/dbSNP/All_20180418_chr.vcf.gz"
-
 ############################################################################################################################################################
+############################################################################################################################################################
+
+## Take variables from this file:
+source Define_Paths.sh
+
 ############################################################################################################################################################
 ############################################################################################################################################################
 
