@@ -2,6 +2,9 @@
 This repo contains scripts to run Strelka2 and Manta on tumor/normal BAM file pairs,
 plus scripts to do postprocessing.
 
+## Define_Paths.sh
+Contains all the paths to executables and files needed to run Strelka and Manta + postprocessing.
+
 ## Make_MantaDirectories.sh
 This script creates the directories for Manta SV calling, pulling the basename of the BAM files as dir name.
 It creates a subfolder <Somatic> or <Germline> in each of these. 
