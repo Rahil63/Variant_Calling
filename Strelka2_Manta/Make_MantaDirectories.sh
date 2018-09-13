@@ -22,7 +22,7 @@ ls *-t*.bam | \
     --normalBam={}-n_SortedRmdup.bam \
     --tumorBam={}-t_SortedRmdup.bam \
     --callRegions=${PRIMARY} \
-    --runDir=VariantDir_${BASENAME}/Manta/Somatic/ \
+    --runDir=VariantDir_{}/Manta/Somatic/ \
     --referenceFasta=${HG38}"
     
 ls *-n_SortedRmdup.bam | \
@@ -30,7 +30,7 @@ ls *-n_SortedRmdup.bam | \
   parallel "$MANTA \
     --normalBam={}-n_SortedRmdup.bam \
     --callRegions=${PRIMARY} \
-    --runDir=VariantDir_${BASENAME}/Manta/Germline/ \
+    --runDir=VariantDir_{}/Manta/Germline/ \
     --referenceFasta=${HG38}"
     
 ############################################################################################
