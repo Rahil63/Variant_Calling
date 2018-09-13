@@ -1,18 +1,25 @@
 #!/bin/bash
 
-## Script assumes to be in the same directory as the raw Strelka2 variants
-## through the strelka dirs:
+## Script:
 ## -- adding AF to the SNVs and Indels, 
 ## -- merges the two files,
 ## -- excludes variants in low-complexity,
 ## -- annotates remaining stuff with VEP and 
 ## -- removes COMMON (1KG) variants.
 
+## it assumes to be in the directory that contains the variant call directories (see Make-*.sh),
+## BASENAME must be defined as $1
+
 ############################################################################################################################################################
 ############################################################################################################################################################
 
 ## Take variables from this file:
 source Define_Paths.sh
+
+## Enter directory with somatic raw variants:
+BASENAME=$1
+BASEDIR=$(pwd)
+cd VariantDir_${BASENAME}/Strelka2/Somatic/results/variants/
 
 ############################################################################################################################################################
 ############################################################################################################################################################
@@ -103,7 +110,14 @@ vep --buffer_size 50000 --no_stats --cache --everything --fork 4 --vcf --format 
   -i somatic.PASSED.ExLC.vcf.gz -o  STDOUT | \
     filter_vep --filter "not dbSNP151_COMMON = 1" | bgzip -@ 6 > somatic.PASSED.ExLC.Ex1KG.vcf.gz
 
+############################################################################################################################################################
+############################################################################################################################################################
+############################################################################################################################################################
+
+## Make symbolic link to the processed variants into an output folder:
+
+if [[ ! -d ${BASEDIR}/Final_Variants ]]; then mkdir ${BASEDIR}/Final_Variants; fi
+ln -s somatic.PASSED.ExLC.Ex1KG.vcf.gz ${BASEDIR}/Final_Variants/${BASENAME}_SNVs.vcf.gz
+
 >&2 echo'' && >&2 echo'[INFO] Ended on:' && date
-############################################################################################################################################################
-############################################################################################################################################################
-############################################################################################################################################################
+
