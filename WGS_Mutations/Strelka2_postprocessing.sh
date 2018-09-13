@@ -32,8 +32,8 @@ function Strelka_PP {
   ############################################################################################################################################################
   
   >&2 echo ''
-  >&2 echo'######################################################################################'
-  >&2 echo'[INFO]' $BASENAME 'Strelka2 postprocessing started on:' && date && >&2 echo''
+  >&2 echo '######################################################################################'
+  >&2 echo '[INFO]' $BASENAME 'Strelka2 postprocessing started on:' && date && >&2 echo''
 
   ## Add somatic variant allele frequency, see:
   ## https://github.com/Illumina/strelka/blob/master/docs/userGuide/README.md#somatic
@@ -114,16 +114,17 @@ function Strelka_PP {
   vep --buffer_size 50000 --no_stats --cache --everything --fork 4 --vcf --format vcf --custom $DBSNP151,dbSNP151,vcf,exact,,COMMON,TOPMED \
     -i somatic.PASSED.ExLC.vcf.gz -o  STDOUT | \
       filter_vep --filter "not dbSNP151_COMMON = 1" | bgzip -@ 6 > somatic.PASSED.ExLC.Ex1KG.vcf.gz
-
+      
+  tabix -p vcf somatic.PASSED.ExLC.Ex1KG.vcf.gz
   ############################################################################################################################################################
     
   ## Make symbolic link to the processed variants into an output folder:
 
   if [[ ! -d ${BASEDIR}/Final_Variants ]]; then mkdir ${BASEDIR}/Final_Variants; fi
-  ln -s somatic.PASSED.ExLC.Ex1KG.vcf.gz ${BASEDIR}/Final_Variants/${BASENAME}_SNVs.vcf.gz
+  ln -s $(realpath somatic.PASSED.ExLC.Ex1KG.vcf.gz) ${BASEDIR}/Final_Variants/${BASENAME}_SNVs.vcf.gz
 
-  >&2 echo'[INFO]' $BASENAME 'Strelka2 postprocessing ended on:' && date && >&2 echo''
-  >&2 echo'######################################################################################'
+  >&2 echo '[INFO]' $BASENAME 'Strelka2 postprocessing ended on:' && date && >&2 echo''
+  >&2 echo '######################################################################################'
   >&2 echo ''
 }
 ############################################################################################################################################################
