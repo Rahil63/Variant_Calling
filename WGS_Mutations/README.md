@@ -16,11 +16,11 @@ finished because the ```candidateSmallIndels.vcf.gz``` must be passed to Strelka
 
 ## Strelka2_postprocessing.sh
 This script postprocesses the somatic calls from Strelka2.
-Can be executed via ```start_Strelka2_postprocessing.sh``` from the base directory.
+Runs automatically on all Variant directories, assuming Strelka2 finished without issues.
 Will remove non-PASSED variants, variants in low-complexity regions,
 variants that are COMMON=1 in dbSNP151/1KG, add allele frequency to the VCF,
 and create one merged VCF.gz for each sample.
-A symbolic link for each of these files is created in ```./Final_Variants```.
+A symbolic link for each of these files is created in ```./Variants```.
 
 ## To Do
 Write something that postprocesses the Manta calls, excluding or blacklisting breakpoints that are
