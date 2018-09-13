@@ -6,7 +6,7 @@
 ## Using seqtk to interleave mate files, cutadapt for trimming,
 ## BWA mem for alignment, samblaster for dup. marking, and sambamba for sorting & indexing.
 ## Usage ./script.sh BASENAME
-## Runtime for a 30-50x WGS sample, depending on traffic, between 8-12 hours.
+## Runtime for a 30-50x WGS sample, depending on traffic, somewhat between 8-16 hours.
 
 ## Run with a helper script that contains the #SBATCH parameters and the basename:
 ## ls *_1.fastq.gz | awk -F "_" '{print $1}' | parallel -j 6 "./script.sh {}"
