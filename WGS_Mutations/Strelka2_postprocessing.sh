@@ -1,5 +1,16 @@
 #!/bin/bash
 
+#######
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=34
+#SBATCH --partition=hims
+#SBATCH --time=48:00:00 
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=a_toen03@uni-muenster.de
+#SBATCH --output=Strelka2_postprocessing.log
+#SBATCH --job-name=Strelka2_postprocessing
+#######
+
 ## This script performs postprocessing of Strelka2 somatic raw variants (SNVs).
 ## It:
 ## -- adding AF to the SNVs and Indels, 
