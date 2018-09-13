@@ -8,8 +8,11 @@
 ## -- annotates remaining stuff with VEP and 
 ## -- removes COMMON (1KG) variants.
 
-## Tt assumes to be in the directory that contains the variant call directories (see Make-*.sh),
+## It assumes to be in the directory that contains the variant call directories (see Make-*.sh),
 
+if [[ ! -e Define_Paths.sh ]]; then
+  echo '[ERROR] Define_Paths.sh not found -- exiting!' && exit 1
+  fi
 ############################################################################################################################################################
 ############################################################################################################################################################
 
