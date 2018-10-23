@@ -5,17 +5,19 @@
 export LC_ALL=en_US.UTF-8
 
 #####################################################################################################
+
+#### CALLING SOMATIC VARIANTS WITH VARSCAN2 FROM TUMOR/NORMAL PAIRS
+#### 
+#### Script assumes that tumor-normal BAM pair is present in the dir as this script.
+#### Also assumes samtools, sambamba, mawk, bedtools and bgzip in PATH.
+#### The path to the VarScan2.jar executable must be specified in line 29.
 ####
-#### Bash script for variant calling with samtools mpileup | VarScan2.
-#### Script assumes that a pair of tumor-normal BAM files is present in the dir where the script is started from.
-#### Also assumes samtools, sambamba and bam-readcount in PATH, and path to varscan.jar specified
-#### in this script as VARSCAN="java -jar /path/to/varscan.jar"
-#### Raw variants are called with VarScan2 somatic, then split into somatic and germs by
+#### Raw variants are called with VarScan2 somatic, then split into somatic and germlines by
 #### processSomatic, selected for high-confidence variants and filtered for junk calls
 #### with fpfilter. For fpfilter, bam-readcount is used to extract the necessary info
 #### directly from the BAM files.
 #### GNU parallel is used to parallelize the job over all chromosomes.
-#### ./VarScan2.sh tumor.bam normal.bam samplename
+#### USAGE: ./VarScan2.sh tumor.bam normal.bam samplename
 ####
 #####################################################################################################
 ####
