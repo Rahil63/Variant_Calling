@@ -11,6 +11,7 @@ export LC_ALL=en_US.UTF-8
 #### Script assumes that tumor-normal BAM pair is present in the dir as this script.
 #### Also assumes samtools, sambamba, mawk, bedtools and bgzip in PATH.
 #### The path to the VarScan2.jar executable must be specified in line 29.
+#### The genome fasta is to be specified in line 30.
 ####
 #### Raw variants are called with VarScan2 somatic, then split into somatic and germlines by
 #### processSomatic, selected for high-confidence variants and filtered for junk calls
